@@ -433,6 +433,25 @@
   @media (max-width: 480px) {
     .survey-wrap { padding: 48px 20px 100px; }
     .intro-meta { flex-direction: column; gap: 12px; }
+
+    /* Ensure touch-friendly buttons */
+    .btn { min-height: 44px; }
+
+    /* Better spacing for options on mobile */
+    .option { padding: 14px 16px; }
+    .option-text { font-size: 16px; } /* Prevents iOS zoom on input focus */
+
+    /* Input fields */
+    .contact-input, textarea { font-size: 16px; } /* Prevents iOS zoom */
+
+    /* Consent checkbox larger for easier tapping */
+    .consent-check-label input[type="checkbox"] {
+      width: 22px;
+      height: 22px;
+    }
+
+    /* Nav row spacing */
+    .nav-row { margin-top: 28px; gap: 12px; }
   }
 </style>
 </head>

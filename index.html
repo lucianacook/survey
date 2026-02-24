@@ -565,6 +565,70 @@ let sessionToken = null;
 let sessionId = null;
 let fingerprint = null;
 let autoSaveTimer = null;
+let pageViewId = null; // Track this page view
+
+// =====================================================
+// ANALYTICS TRACKING FUNCTIONS
+// =====================================================
+
+// Track page view (when someone lands on survey)
+async function trackPageView() {
+  if (!supabaseClient) return;
+
+  try {
+    const { data, error } = await supabaseClient
+      .from('page_views')
+      .insert({
+        referrer: document.referrer || null,
+        user_agent: navigator.userAgent
+      })
+      .select()
+      .single();
+
+    if (!error && data) {
+      pageViewId = data.id;
+      console.log('Page view tracked');
+    }
+  } catch (err) {
+    console.error('Failed to track page view:', err);
+  }
+}
+
+// Track question progress (to identify drop-off points)
+async function trackQuestionProgress(questionId) {
+  if (!supabaseClient || !sessionId) return;
+
+  try {
+    await supabaseClient
+      .from('question_progress')
+      .insert({
+        session_id: sessionId,
+        question_id: questionId
+      });
+  } catch (err) {
+    // Ignore duplicates (UNIQUE constraint)
+    if (!err.message?.includes('duplicate')) {
+      console.error('Failed to track question progress:', err);
+    }
+  }
+}
+
+// Update page view when survey is started
+async function markPageViewAsStarted() {
+  if (!supabaseClient || !pageViewId || !sessionId) return;
+
+  try {
+    await supabaseClient
+      .from('page_views')
+      .update({
+        started: true,
+        session_id: sessionId
+      })
+      .eq('id', pageViewId);
+  } catch (err) {
+    console.error('Failed to update page view:', err);
+  }
+}
 
 // =====================================================
 // SESSION & PERSISTENCE FUNCTIONS
@@ -1093,6 +1157,9 @@ async function startSurvey() {
     return;
   }
 
+  // Mark page view as started
+  markPageViewAsStarted();
+
   activeQuestions = getActiveQuestions();
   history = [];
   currentQIndex = -1;
@@ -1117,7 +1184,12 @@ function advanceTo(idx) {
   }
   history.push(idx);
   currentQIndex = history.length - 1;
-  renderQuestion(activeQuestions[idx]);
+  const question = activeQuestions[idx];
+
+  // Track question progress for drop-off analysis
+  trackQuestionProgress(question.id);
+
+  renderQuestion(question);
   updateProgress();
 }
 
@@ -1320,6 +1392,14 @@ async function submitFollowup() {
     alert('Failed to save contact information. Please try again or email me directly.');
   }
 }
+
+// =====================================================
+// INITIALIZATION
+// =====================================================
+// Track page view when survey loads
+window.addEventListener('DOMContentLoaded', () => {
+  trackPageView();
+});
 </script>
 </body>
 </html>

@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mental Wellness Research Survey</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+<!-- FingerprintJS for duplicate prevention -->
+<script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js"></script>
+
+<!-- Supabase client -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+  :root {
+    --bg: #F7F4EF;
+    --surface: #FFFFFF;
+    --teal: #0A6B6E;
+    --teal-light: #E8F4F4;
+    --teal-mid: #1A8F8F;
+    --dark: #1C1C1C;
+    --gray: #6B6B6B;
+    --gray-light: #E8E4DD;
+    --accent: #C8704A;
+    --serif: 'DM Serif Display', Georgia, serif;
+    --sans: 'DM Sans', sans-serif;
+    --radius: 12px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--dark);
+    min-height: 100vh;
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  /* Progress bar */
+  .progress-bar-wrap {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--gray-light);
+    z-index: 100;
+  }
+  .progress-bar {
+    height: 100%;
+    background: var(--teal);
+    transition: width 0.4s ease;
+    width: 0%;
+  }
+
+  /* Layout */
+  .survey-wrap {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 60px 24px 120px;
+  }
+
+  /* Screens */
+  .screen {
+    display: none;
+    animation: fadeUp 0.45s ease both;
+  }
+  .screen.active { display: block; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Intro */
+  .intro-eyebrow {
+    font-family: var(--sans);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--teal);
+    margin-bottom: 16px;
+  }
+  .intro-title {
+    font-family: var(--serif);
+    font-size: clamp(36px, 6vw, 52px);
+    line-height: 1.1;
+    color: var(--dark);
+    margin-bottom: 28px;
+  }
+  .intro-title em {
+    color: var(--teal);
+    font-style: italic;
+  }
+  .intro-body {
+    font-size: 16px;
+    color: var(--gray);
+    line-height: 1.75;
+    margin-bottom: 16px;
+  }
+  .intro-meta {
+    display: flex;
+    gap: 24px;
+    margin: 32px 0;
+    padding: 20px 0;
+    border-top: 1px solid var(--gray-light);
+    border-bottom: 1px solid var(--gray-light);
+  }
+  .meta-item {
+    font-size: 13px;
+    color: var(--gray);
+  }
+  .meta-item strong {
+    display: block;
+    color: var(--dark);
+    font-weight: 500;
+    margin-bottom: 2px;
+  }
+
+  /* Question screen */
+  .q-section {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--gray);
+    margin-bottom: 12px;
+  }
+  .q-counter {
+    font-size: 12px;
+    color: var(--gray);
+    margin-bottom: 8px;
+  }
+  .q-title {
+    font-family: var(--serif);
+    font-size: clamp(22px, 4vw, 30px);
+    line-height: 1.25;
+    color: var(--dark);
+    margin-bottom: 32px;
+  }
+
+  /* Options */
+  .options { display: flex; flex-direction: column; gap: 10px; }
+
+  .option {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 16px 20px;
+    background: var(--surface);
+    border: 1.5px solid var(--gray-light);
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all 0.18s ease;
+    user-select: none;
+  }
+  .option:hover {
+    border-color: var(--teal-mid);
+    background: var(--teal-light);
+  }
+  .option.selected {
+    border-color: var(--teal);
+    background: var(--teal-light);
+  }
+  .option.prefer-not {
+    border-style: dashed;
+    border-color: var(--gray-light);
+  }
+  .option.prefer-not:hover, .option.prefer-not.selected {
+    border-color: var(--gray);
+    background: #F0EDE8;
+  }
+
+  .option-check {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 1.5px solid var(--gray-light);
+    background: white;
+    flex-shrink: 0;
+    margin-top: 1px;
+    transition: all 0.18s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .option.selected .option-check {
+    background: var(--teal);
+    border-color: var(--teal);
+  }
+  .option.selected .option-check::after {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: white;
+  }
+
+  /* Multi-select uses square check */
+  .multi .option-check { border-radius: 4px; }
+  .multi .option.selected .option-check::after {
+    content: '✓';
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: 0;
+    background: none;
+    color: white;
+    line-height: 1;
+  }
+
+  .option-text {
+    font-size: 15px;
+    color: var(--dark);
+    line-height: 1.5;
+  }
+  .option.prefer-not .option-text { color: var(--gray); font-style: italic; }
+
+  /* Open text */
+  .open-textarea {
+    width: 100%;
+    min-height: 140px;
+    padding: 18px 20px;
+    background: var(--surface);
+    border: 1.5px solid var(--gray-light);
+    border-radius: var(--radius);
+    font-family: var(--sans);
+    font-size: 15px;
+    color: var(--dark);
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.18s;
+    line-height: 1.6;
+  }
+  .open-textarea:focus { border-color: var(--teal); }
+  .open-textarea::placeholder { color: #B0AB9F; }
+
+  /* Opt-in contact */
+  .contact-input {
+    width: 100%;
+    padding: 14px 18px;
+    background: var(--surface);
+    border: 1.5px solid var(--gray-light);
+    border-radius: var(--radius);
+    font-family: var(--sans);
+    font-size: 15px;
+    color: var(--dark);
+    outline: none;
+    margin-top: 12px;
+    transition: border-color 0.18s;
+  }
+  .contact-input:focus { border-color: var(--teal); }
+  .contact-input::placeholder { color: #B0AB9F; }
+  .contact-label {
+    font-size: 13px;
+    color: var(--gray);
+    margin-top: 16px;
+    margin-bottom: 4px;
+  }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 32px;
+    border-radius: 100px;
+    font-family: var(--sans);
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s ease;
+  }
+  .btn-primary {
+    background: var(--teal);
+    color: white;
+  }
+  .btn-primary:hover { background: #085659; transform: translateY(-1px); }
+  .btn-primary:disabled { background: var(--gray-light); color: var(--gray); cursor: not-allowed; transform: none; }
+  .btn-ghost {
+    background: transparent;
+    color: var(--gray);
+    padding: 14px 0;
+  }
+  .btn-ghost:hover { color: var(--dark); }
+
+  .btn-arrow { font-size: 18px; transition: transform 0.2s; }
+  .btn-primary:not(:disabled):hover .btn-arrow { transform: translateX(4px); }
+
+  .nav-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 36px;
+  }
+
+  /* Thank you */
+  .thankyou-mark {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: var(--teal);
+    color: white;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 28px;
+  }
+  .thankyou-title {
+    font-family: var(--serif);
+    font-size: clamp(28px, 5vw, 42px);
+    line-height: 1.15;
+    margin-bottom: 20px;
+  }
+  .thankyou-body {
+    font-size: 16px;
+    color: var(--gray);
+    line-height: 1.75;
+    max-width: 480px;
+  }
+
+  /* Hint text */
+  .hint {
+    font-size: 13px;
+    color: var(--gray);
+    margin-top: 10px;
+    font-style: italic;
+  }
+
+  /* Divider */
+  .divider {
+    height: 1px;
+    background: var(--gray-light);
+    margin: 32px 0;
+  }
+
+  /* Contact opt-in card */
+  .optin-card {
+    background: var(--teal-light);
+    border: 1.5px solid var(--teal);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 28px;
+  }
+  .optin-card-title {
+    font-family: var(--serif);
+    font-size: 20px;
+    color: var(--dark);
+    margin-bottom: 8px;
+  }
+  .optin-card-body {
+    font-size: 14px;
+    color: var(--gray);
+    line-height: 1.65;
+  }
+
+  /* Guidelines */
+  .intro-guidelines {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 28px 0;
+    padding: 24px;
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1.5px solid var(--gray-light);
+  }
+  .guideline-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    font-size: 14px;
+    color: var(--dark);
+    line-height: 1.5;
+  }
+  .guideline-bullet {
+    flex-shrink: 0;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--teal);
+    margin-top: 8px;
+  }
+
+  /* Consent */
+  .consent-box {
+    background: var(--surface);
+    border: 1.5px solid var(--gray-light);
+    border-radius: var(--radius);
+    padding: 22px 24px;
+    margin-bottom: 28px;
+  }
+  .consent-title {
+    font-weight: 500;
+    font-size: 14px;
+    color: var(--dark);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 11px;
+  }
+  .consent-body {
+    font-size: 13px;
+    color: var(--gray);
+    line-height: 1.65;
+    margin-bottom: 18px;
+  }
+  .consent-check-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    cursor: pointer;
+  }
+  .consent-check-label input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    accent-color: var(--teal);
+    margin-top: 2px;
+    cursor: pointer;
+  }
+  .consent-check-text {
+    font-size: 14px;
+    color: var(--dark);
+    font-weight: 500;
+    line-height: 1.5;
+  }
+
+  /* Mobile */
+  @media (max-width: 480px) {
+    .survey-wrap { padding: 48px 20px 100px; }
+    .intro-meta { flex-direction: column; gap: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="progress-bar-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="survey-wrap">
+
+  <!-- INTRO -->
+  <div class="screen active" id="screen-intro">
+    <div class="intro-eyebrow">Research Survey</div>
+    <h1 class="intro-title">A few questions about mental wellness: <em>the habits, tools, and what actually works</em></h1>
+    <p class="intro-body">Hi, I'm Luciana Cook. I'm doing research for an early-stage startup focused on the habits, tools, and everyday practices people use (or wish existed) to better understand themselves and support their mental wellness. Your honest input helps ensure we focus on problems that actually matter. Thank you for helping shape something that's still being defined.</p>
+
+    <div class="consent-box">
+      <div class="consent-title">Before you begin</div>
+      <label class="consent-check-label">
+        <input type="checkbox" id="consentCheck" onchange="toggleStart()">
+        <span class="consent-check-text">I am 18 or older and I agree to participate. I understand I can stop at any time and should not share sensitive personal health details.</span>
+      </label>
+    </div>
+
+    <div class="intro-meta">
+      <div class="meta-item"><strong>5 to 10 minutes</strong>to complete</div>
+      <div class="meta-item"><strong>Fully anonymous</strong>No email or sign-up required</div>
+      <div class="meta-item"><strong>Up to 20 questions</strong>across 5 topics</div>
+    </div>
+    <button class="btn btn-primary" id="btnStart" onclick="startSurvey()" disabled>Let's get started <span class="btn-arrow">→</span></button>
+  </div>
+
+  <!-- QUESTIONS -->
+  <div class="screen" id="screen-questions">
+    <div class="q-section" id="qSection"></div>
+    <div class="q-counter" id="qCounter"></div>
+    <div class="q-title" id="qTitle"></div>
+    <div id="qBody"></div>
+    <div class="nav-row">
+      <button class="btn btn-ghost" id="btnBack" onclick="goBack()">← Back</button>
+      <button class="btn btn-primary" id="btnNext" onclick="goNext()" disabled>Continue <span class="btn-arrow">→</span></button>
+    </div>
+  </div>
+
+  <!-- SUBMITTED -->
+  <div class="screen" id="screen-submitted">
+    <div class="thankyou-mark">✓</div>
+    <h2 class="thankyou-title">Your responses have been submitted.</h2>
+    <p class="thankyou-body">Everything you shared is fully anonymous. Thank you for helping shape something that's still being defined.</p>
+    <div style="margin-top:40px;">
+      <p class="thankyou-body" style="margin-bottom:24px;">One last thing — would you be open to a 20-minute follow-up conversation? A small group of people who go deeper will directly shape what gets built. Completely optional.</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="showScreen('followup')">Yes, I'm open to it <span class="btn-arrow">→</span></button>
+        <button class="btn btn-ghost" onclick="showScreen('done')" style="padding:14px 20px;">No thanks</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOLLOW UP -->
+  <div class="screen" id="screen-followup">
+    <h2 class="thankyou-title">Great — let's stay in touch.</h2>
+    <p class="thankyou-body" style="margin-bottom:32px;">Your contact information is stored completely separately from your survey responses and will only be used to reach out about a follow-up conversation.</p>
+    <div>
+      <p class="contact-label">Your name</p>
+      <input class="contact-input" type="text" id="inputName" placeholder="First name is fine">
+      <p class="contact-label" style="margin-top:16px;">Best way to reach you</p>
+      <input class="contact-input" type="text" id="inputContact" placeholder="you@email.com or linkedin.com/in/yourname">
+    </div>
+    <div style="margin-top:32px;display:flex;gap:12px;flex-wrap:wrap;">
+      <button class="btn btn-primary" onclick="submitFollowup()">Submit <span class="btn-arrow">→</span></button>
+      <button class="btn btn-ghost" onclick="showScreen('done')" style="padding:14px 20px;">Skip</button>
+    </div>
+  </div>
+
+  <!-- FINAL DONE -->
+  <div class="screen" id="screen-done">
+    <div class="thankyou-mark">✓</div>
+    <h2 class="thankyou-title">Thank you. This genuinely helps.</h2>
+    <p class="thankyou-body">I'm in early stages, so every response shapes what I build. If you shared your contact info, I'll be in touch soon.</p>
+    <br>
+    <p class="thankyou-body" style="font-style:italic;">Luciana</p>
+  </div>
+
+  <!-- ALREADY SUBMITTED -->
+  <div class="screen" id="screen-already-submitted">
+    <div class="thankyou-mark">⚠️</div>
+    <h2 class="thankyou-title">You've already completed this survey</h2>
+    <p class="thankyou-body">
+      Thank you for your interest, but it looks like you've already submitted a response.
+      Each person may only complete the survey once to ensure data integrity.
+    </p>
+    <p class="thankyou-body" style="margin-top:20px;">
+      If you believe this is an error, please contact me at:
+      <a href="mailto:your@email.com" style="color: var(--teal);">your@email.com</a>
+    </p>
+  </div>
+
+</div>
+
+<script>
+// =====================================================
+// SUPABASE CONFIGURATION
+// =====================================================
+// TODO: Replace these with your actual Supabase credentials
+const SUPABASE_URL = 'https://nvipwqthamsglqcaqyjs.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52aXB3cXRoYW1zZ2xxY2FxeWpzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4Nzc3NjMsImV4cCI6MjA4NzQ1Mzc2M30.aql34XsFCX-wthzqIo1vR0jbLmDvR2-VXYiC-X7T1Yg';
+
+// Initialize Supabase client
+let supabaseClient = null;
+if (window.supabase) {
+  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+}
+
+// Session management
+let sessionToken = null;
+let sessionId = null;
+let fingerprint = null;
+let autoSaveTimer = null;
+
+// =====================================================
+// SESSION & PERSISTENCE FUNCTIONS
+// =====================================================
+
+// Initialize fingerprint
+async function initFingerprint() {
+  try {
+    const fp = await FingerprintJS.load();
+    const result = await fp.get();
+    fingerprint = result.visitorId;
+    return fingerprint;
+  } catch (err) {
+    console.error('Failed to initialize fingerprint:', err);
+    return null;
+  }
+}
+
+// Initialize session
+async function initSession() {
+  if (!supabaseClient) {
+    console.error('Supabase not configured');
+    return true; // Allow survey to work in demo mode
+  }
+
+  // Initialize fingerprint for duplicate prevention
+  await initFingerprint();
+
+  // Check if user already has an anonymous session
+  const { data: { session: existingSession } } = await supabaseClient.auth.getSession();
+
+  if (existingSession) {
+    sessionToken = existingSession.access_token;
+    sessionId = existingSession.user.id;
+
+    // Check if already submitted
+    const { data, error } = await supabaseClient
+      .from('survey_responses')
+      .select('responses, status')
+      .eq('session_id', sessionId)
+      .single();
+
+    if (!error && data) {
+      if (data.status === 'completed') {
+        showScreen('already-submitted');
+        return false;
+      }
+      if (data.status === 'in_progress' && data.responses) {
+        responses = data.responses || {};
+        console.log('Resumed previous session');
+        return true;
+      }
+    }
+
+    console.log('Existing anonymous session:', sessionId);
+    return true;
+  }
+
+  // Create new anonymous session
+  try {
+    const { data, error } = await supabaseClient.auth.signInAnonymously();
+
+    if (error) {
+      console.error('Failed to create anonymous session:', error);
+      alert('Failed to initialize survey. Please refresh the page and try again.');
+      return false;
+    }
+
+    sessionToken = data.session.access_token;
+    sessionId = data.user.id;
+
+    console.log('New anonymous session created:', sessionId);
+    return true;
+  } catch (err) {
+    console.error('Failed to initialize session:', err);
+    alert('Failed to initialize survey. Please refresh the page and try again.');
+    return false;
+  }
+}
+
+// Save progress to server
+async function saveSurvey() {
+  if (!supabaseClient || !sessionId || Object.keys(responses).length === 0) return;
+
+  try {
+    // Check current status first - don't overwrite completed surveys
+    const { data: existing } = await supabaseClient
+      .from('survey_responses')
+      .select('status')
+      .eq('session_id', sessionId)
+      .single();
+
+    // If already completed, don't overwrite
+    if (existing?.status === 'completed') {
+      console.log('Survey already completed, skipping auto-save');
+      clearInterval(autoSaveTimer); // Stop auto-save
+      return;
+    }
+
+    const { error } = await supabaseClient
+      .from('survey_responses')
+      .upsert({
+        session_id: sessionId,
+        responses,
+        status: 'in_progress',
+        last_saved_at: new Date().toISOString(),
+      }, { onConflict: 'session_id' });
+
+    if (error) throw error;
+
+    // Also save to localStorage as backup
+    localStorage.setItem('surveyResponses', JSON.stringify(responses));
+
+    console.log('Progress saved');
+  } catch (err) {
+    console.error('Failed to save:', err);
+    // Fallback to localStorage only
+    localStorage.setItem('surveyResponses', JSON.stringify(responses));
+  }
+}
+
+// Start auto-save timer (every 30 seconds)
+function startAutoSave() {
+  if (autoSaveTimer) clearInterval(autoSaveTimer);
+  autoSaveTimer = setInterval(() => {
+    saveSurvey();
+  }, 30000);
+}
+
+// Submit final survey
+async function submitSurvey() {
+  // Stop auto-save immediately to prevent race conditions
+  if (autoSaveTimer) {
+    clearInterval(autoSaveTimer);
+    autoSaveTimer = null;
+  }
+
+  if (!supabaseClient) {
+    console.log('Survey responses (demo mode):', responses);
+    return true;
+  }
+
+  await initFingerprint();
+
+  try {
+    // Check if already submitted
+    const { data: existing } = await supabaseClient
+      .from('survey_responses')
+      .select('status')
+      .eq('session_id', sessionId)
+      .single();
+
+    if (existing?.status === 'completed') {
+      showScreen('already-submitted');
+      return false;
+    }
+
+    // Submit to database
+    const { error } = await supabaseClient
+      .from('survey_responses')
+      .upsert({
+        session_id: sessionId,
+        responses,
+        status: 'completed',
+        completed_at: new Date().toISOString(),
+        fingerprint_hash: fingerprint,
+      }, { onConflict: 'session_id' });
+
+    if (error) throw error;
+
+    // Clear localStorage after successful submission
+    localStorage.removeItem('surveySession');
+    localStorage.removeItem('surveyResponses');
+
+    console.log('Survey submitted successfully');
+    return true;
+  } catch (err) {
+    console.error('Submission failed:', err);
+    throw err;
+  }
+}
+
+// Submit follow-up contact
+async function submitContact(name, contact) {
+  if (!supabaseClient) {
+    console.log('Follow-up contact (demo mode):', { name, contact });
+    return true;
+  }
+
+  try {
+    const { error } = await supabaseClient
+      .from('follow_up_contacts')
+      .insert({ name: name.trim(), contact: contact.trim() });
+
+    if (error) throw error;
+
+    console.log('Contact info submitted successfully');
+    return true;
+  } catch (err) {
+    console.error('Contact submission failed:', err);
+    throw err;
+  }
+}
+
+// =====================================================
+// SURVEY QUESTIONS & LOGIC
+// =====================================================
+
+const QUESTIONS = [
+  // SECTION 1
+  {
+    id: 'q1', section: 'Section 1: About You', number: 1,
+    title: 'How would you describe your current approach to mental wellness and self-care?',
+    type: 'multi',
+    options: [
+      'I actively prioritize it with regular habits or practices',
+      'I think about it but don\'t have a consistent routine',
+      'I address it when something feels off, but not proactively',
+      'I don\'t really focus on it',
+      'Prefer not to answer'
+    ]
+  },
+  {
+    id: 'q2', section: 'Section 1: About You', number: 2,
+    title: 'Which best describes where you\'re at in life right now?',
+    type: 'single',
+    options: [
+      'Navigating a major transition (new job, relationship change, loss, etc.)',
+      'Generally stable but looking to grow',
+      'Dealing with ongoing stress or anxiety',
+      'Feeling pretty good, mostly curious about this topic',
+      'Prefer not to answer'
+    ]
+  },
+  // SECTION 2
+  {
+    id: 'q3', section: 'Section 2: Journaling & Self-Reflection', number: 3,
+    title: 'Have you ever tried journaling?',
+    type: 'single',
+    options: [
+      'Yes, I journal consistently',
+      'Yes, but I stopped',
+      'I\'ve tried a few times but it never stuck',
+      'No, I\'ve never tried it',
+      'Prefer not to answer'
+    ]
+  },
+  {
+    id: 'q3b', section: 'Section 2: Journaling & Self-Reflection', number: 4,
+    title: 'What has held you back from journaling?',
+    type: 'multi',
+    showIf: (r) => r.q3 === 'No, I\'ve never tried it',
+    options: [
+      'I never saw the value in it',
+      'I wouldn\'t know what to write',
+      'It feels too time consuming',
+      'It feels uncomfortable or exposing',
+      'I\'ve just never thought about it',
+      'Other',
+      'Prefer not to answer'
+    ],
+    hasOther: true
+  },
+  {
+    id: 'q4', section: 'Section 2: Journaling & Self-Reflection', number: 4,
+    title: 'What did you mainly write about when journaling?',
+    type: 'multi',
+    showIf: (r) => ['Yes, I journal consistently','Yes, but I stopped','I\'ve tried a few times but it never stuck'].includes(r.q3),
+    options: [
+      'Processing emotions or difficult situations',
+      'Gratitude or positive reflection',
+      'Goals and personal growth',
+      'Daily events or memories',
+      'Figuring out patterns in my own behavior or feelings',
+      'Other',
+      'Prefer not to answer'
+    ],
+    hasOther: true
+  },
+  {
+    id: 'q5', section: 'Section 2: Journaling & Self-Reflection', number: 5,
+    title: 'What was the main reason you stopped journaling?',
+    type: 'single',
+    showIf: (r) => ['Yes, but I stopped','I\'ve tried a few times but it never stuck'].includes(r.q3),
+    options: [
+      'It felt like a chore, hard to stay consistent',
+      'I didn\'t feel like it was doing anything useful',
+      'I didn\'t know what to write',
+      'I was worried about privacy',
+      'Life got busy and I never got back to it',
+      'Other',
+      'Prefer not to answer'
+    ],
+    hasOther: true
+  },
+  {
+    id: 'q6', section: 'Section 2: Journaling & Self-Reflection', number: 6,
+    title: 'When you go through something difficult (stress, a conflict, a big decision) how do you typically process it?',
+    type: 'multi',
+    options: [
+      'Talk to someone I trust',
+      'Journal or write it out',
+      'Exercise or physical activity',
+      'Sit with it quietly / meditate',
+      'Distract myself until it passes',
+      'Therapy or professional support',
+      'I don\'t have a reliable way to process things',
+      'Prefer not to answer'
+    ]
+  },
+  {
+    id: 'q7', section: 'Section 2: Journaling & Self-Reflection', number: 7,
+    title: 'Do you feel like you have a clear picture of your own emotional patterns: the triggers, behaviors, or feelings that keep repeating?',
+    type: 'single',
+    options: [
+      'Yes, I have a pretty clear picture',
+      'Somewhat: I recognize some patterns but not all',
+      'Not really: I know something\'s there but can\'t see it clearly',
+      'No, this is something I actively struggle with',
+      'Prefer not to answer'
+    ]
+  },
+  // SECTION 3
+  {
+    id: 'q8', section: 'Section 3: Therapy & Professional Support', number: 8,
+    title: 'Have you ever been to therapy or worked with a mental health professional?',
+    type: 'single',
+    options: [
+      'Yes, I\'m currently in therapy',
+      'Yes, I\'ve been in therapy in the past',
+      'No, but I\'ve considered it',
+      'No, and I haven\'t considered it',
+      'Prefer not to answer'
+    ]
+  },
+  {
+    id: 'q8b', section: 'Section 3: Therapy & Professional Support', number: 9,
+    title: 'What has held you back from trying therapy?',
+    type: 'multi',
+    showIf: (r) => ['No, but I\'ve considered it','No, and I haven\'t considered it'].includes(r.q8),
+    options: [
+      'Cost or access',
+      'I don\'t feel like I need it',
+      'Stigma or privacy concerns',
+      'I\'m not sure it would help',
+      'I prefer to handle things on my own',
+      'I\'ve just never got around to it',
+      'Other',
+      'Prefer not to answer'
+    ],
+    hasOther: true
+  },
+  {
+    id: 'q9', section: 'Section 3: Therapy & Professional Support', number: 9,
+    title: 'How effective did you find therapy overall?',
+    type: 'single',
+    showIf: (r) => ['Yes, I\'m currently in therapy','Yes, I\'ve been in therapy in the past'].includes(r.q8),
+    options: [
+      'Very effective: it genuinely changed how I operate',
+      'Somewhat effective: helpful but with clear limits',
+      'Mixed: some good sessions, some that felt like spinning wheels',
+      'Not very effective for me',
+      'Prefer not to answer'
+    ]
+  },
+  {
+    id: 'q10', section: 'Section 3: Therapy & Professional Support', number: 10,
+    title: 'What has limited the effectiveness of therapy for you, if anything?',
+    type: 'multi',
+    showIf: (r) => ['Yes, I\'m currently in therapy','Yes, I\'ve been in therapy in the past'].includes(r.q8),
+    options: [
+      'The gap between sessions, progress felt hard to maintain',
+      'My therapist didn\'t always have context about my day-to-day life',
+      'It was hard to recall specific situations or feelings in session',
+      'Cost or access made consistency difficult',
+      'I didn\'t feel like I made enough progress between sessions',
+      'Nothing, I found it very effective',
+      'Prefer not to answer'
+    ]
+  },
+  // SECTION 4
+  {
+    id: 'q11', section: 'Section 4: AI & Technology', number: 11,
+    title: 'Do you currently use any apps or tools for mental wellness or personal growth?',
+    type: 'multi',
+    options: [
+      'Meditation app (e.g. Headspace, Calm)',
+      'Journaling app (e.g. Day One, Reflectly)',
+      'Therapy app (e.g. BetterHelp, Talkspace)',
+      'General AI assistant (e.g. ChatGPT, Claude)',
+      'Fitness or sleep tracking app',
+      'None',
+      'Other',
+      'Prefer not to answer'
+    ],
+    hasOther: true
+  },
+  {
+    id: 'q12', section: 'Section 4: AI & Technology', number: 12,
+    title: 'Has AI played any role in your personal growth or self-reflection?',
+    type: 'single',
+    options: [
+      'Yes, I use it regularly for this',
+      'I\'ve tried it a few times out of curiosity',
+      'No, but I\'m open to it',
+      'No, and I\'m not interested in using AI for this',
+      'Prefer not to answer'
+    ]
+  },
+  {
+    id: 'q13', section: 'Section 4: AI & Technology', number: 13,
+    title: 'How do you feel about the idea of AI helping you understand your emotional patterns over time?',
+    type: 'single',
+    options: [
+      'Excited: that sounds genuinely useful',
+      'Curious but cautious: I\'d want to understand how it works',
+      'Skeptical: I don\'t think AI can do this well',
+      'Uncomfortable: this feels too personal for AI',
+      'Prefer not to answer'
+    ]
+  },
+  {
+    id: 'q14', section: 'Section 4: AI & Technology', number: 14,
+    title: 'What would most concern you about using AI for something this personal?',
+    type: 'multi',
+    options: [
+      'Privacy: who sees my data',
+      'Accuracy: whether the insights would actually be right',
+      'Replacing human connection: I\'d rather talk to a person',
+      'Not sure it would truly understand me',
+      'Nothing, I\'m comfortable with it',
+      'Other',
+      'Prefer not to answer'
+    ],
+    hasOther: true
+  },
+  // SECTION 5
+  {
+    id: 'q15', section: 'Section 5: The Dream', number: 15,
+    title: 'If a tool existed that genuinely helped you understand your emotional patterns and grow from them, what would it need to do and what would make you trust it?',
+    type: 'open',
+    placeholder: 'Take your time with this one. There is no right answer...'
+  },
+  {
+    id: 'q16', section: 'Section 5: The Dream', number: 16,
+    title: 'Have you ever paid for a mental wellness or self-improvement tool or app?',
+    type: 'single',
+    options: [
+      'Yes, and it was worth it',
+      'Yes, but I stopped using it',
+      'No, but I would if the right thing existed',
+      'No, and I wouldn\'t pay for something like this',
+      'Prefer not to answer'
+    ]
+  },
+  {
+    id: 'q17', section: 'Section 5: The Dream', number: 17,
+    title: 'If something genuinely improved your self-awareness and emotional wellbeing, what would you expect to pay per month?',
+    type: 'single',
+    options: [
+      'Nothing, this should be free',
+      '$5 to $10 per month',
+      '$11 to $20 per month',
+      '$21 to $30 per month',
+      'More than $30 per month, if it actually worked',
+      'Prefer not to answer'
+    ]
+  },
+  // OPT IN handled as separate screen after submission
+];
+
+let responses = {};
+let history = []; // stack of question ids actually shown
+let currentQIndex = -1; // index into history
+let activeQuestions = []; // filtered question list
+
+function getActiveQuestions() {
+  return QUESTIONS.filter(q => !q.showIf || q.showIf(responses));
+}
+
+function toggleStart() {
+  const checked = document.getElementById('consentCheck').checked;
+  document.getElementById('btnStart').disabled = !checked;
+}
+
+async function startSurvey() {
+  const btn = document.getElementById('btnStart');
+  btn.innerHTML = 'Loading...';
+  btn.disabled = true;
+
+  // Initialize session (creates anonymous user)
+  const canStart = await initSession();
+
+  if (!canStart) {
+    btn.innerHTML = 'Let\'s get started <span class="btn-arrow">→</span>';
+    btn.disabled = false;
+    return;
+  }
+
+  activeQuestions = getActiveQuestions();
+  history = [];
+  currentQIndex = -1;
+  showScreen('questions');
+  advanceTo(0);
+
+  // Start auto-save
+  startAutoSave();
+}
+
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function advanceTo(idx) {
+  activeQuestions = getActiveQuestions();
+  if (idx >= activeQuestions.length) { showDone(); return; }
+  if (currentQIndex < history.length - 1) {
+    history = history.slice(0, currentQIndex + 1);
+  }
+  history.push(idx);
+  currentQIndex = history.length - 1;
+  renderQuestion(activeQuestions[idx]);
+  updateProgress();
+}
+
+function renderQuestion(q) {
+  document.getElementById('qSection').textContent = q.section;
+  const activeIdx = history[currentQIndex];
+  const total = activeQuestions.length;
+  document.getElementById('qCounter').textContent = `Question ${activeIdx + 1} of ${total}`;
+  document.getElementById('qTitle').textContent = q.title;
+
+  // Show select hint
+  let hint = document.getElementById('qHint');
+  if (!hint) {
+    hint = document.createElement('div');
+    hint.id = 'qHint';
+    hint.style.cssText = 'font-size:13px;color:#6B6B6B;margin-bottom:20px;margin-top:-8px;';
+    document.getElementById('qTitle').after(hint);
+  }
+  hint.textContent = q.type === 'multi' ? 'Select all that apply.' : '';
+
+  const body = document.getElementById('qBody');
+  body.innerHTML = '';
+
+  if (q.type === 'single' || q.type === 'multi') {
+    const wrap = document.createElement('div');
+    wrap.className = 'options' + (q.type === 'multi' ? ' multi' : '');
+
+    q.options.forEach(opt => {
+      const div = document.createElement('div');
+      const isPrefer = opt === 'Prefer not to answer';
+      div.className = 'option' + (isPrefer ? ' prefer-not' : '');
+
+      const savedVal = responses[q.id];
+      if (q.type === 'single' && savedVal === opt) div.classList.add('selected');
+      if (q.type === 'multi' && Array.isArray(savedVal) && savedVal.includes(opt)) div.classList.add('selected');
+
+      div.innerHTML = `<div class="option-check"></div><div class="option-text">${opt}</div>`;
+      div.addEventListener('click', () => selectOption(q, opt, div, wrap, body));
+      wrap.appendChild(div);
+    });
+
+    body.appendChild(wrap);
+
+    // Other text field
+    if (q.hasOther) {
+      const otherWrap = document.createElement('div');
+      otherWrap.id = 'otherWrap';
+      const savedVal = responses[q.id];
+      const otherSelected = q.type === 'single' ? savedVal === 'Other' :
+        Array.isArray(savedVal) && savedVal.includes('Other');
+      otherWrap.style.display = otherSelected ? 'block' : 'none';
+      otherWrap.style.marginTop = '12px';
+      const otherInput = document.createElement('input');
+      otherInput.type = 'text';
+      otherInput.className = 'contact-input';
+      otherInput.placeholder = 'Please describe...';
+      otherInput.value = responses[q.id + '_other'] || '';
+      otherInput.addEventListener('input', e => {
+        responses[q.id + '_other'] = e.target.value;
+      });
+      otherWrap.appendChild(otherInput);
+      body.appendChild(otherWrap);
+    }
+
+  } else if (q.type === 'open') {
+    const ta = document.createElement('textarea');
+    ta.className = 'open-textarea';
+    ta.placeholder = q.placeholder || 'Your answer...';
+    ta.value = responses[q.id] || '';
+    ta.addEventListener('input', () => {
+      responses[q.id] = ta.value.trim();
+      updateNextBtn(q);
+    });
+    body.appendChild(ta);
+    const hint = document.createElement('p');
+    hint.className = 'hint';
+    hint.textContent = 'This question is open-ended, write as much or as little as you\'d like.';
+    body.appendChild(hint);
+  }
+
+  // Back button
+  document.getElementById('btnBack').style.visibility = currentQIndex > 0 ? 'visible' : 'hidden';
+
+  updateNextBtn(q);
+}
+
+function selectOption(q, opt, div, wrap, body) {
+  if (q.type === 'single') {
+    wrap.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+    div.classList.add('selected');
+    responses[q.id] = opt;
+  } else if (q.type === 'multi') {
+    const isPrefer = opt === 'Prefer not to answer';
+    if (!Array.isArray(responses[q.id])) responses[q.id] = [];
+
+    if (isPrefer) {
+      wrap.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+      div.classList.add('selected');
+      responses[q.id] = ['Prefer not to answer'];
+    } else {
+      responses[q.id] = responses[q.id].filter(v => v !== 'Prefer not to answer');
+      wrap.querySelectorAll('.prefer-not').forEach(o => o.classList.remove('selected'));
+
+      if (div.classList.contains('selected')) {
+        div.classList.remove('selected');
+        responses[q.id] = responses[q.id].filter(v => v !== opt);
+      } else {
+        div.classList.add('selected');
+        responses[q.id].push(opt);
+      }
+    }
+  }
+
+  // Show/hide Other text field
+  if (q.hasOther) {
+    const otherWrap = document.getElementById('otherWrap');
+    if (otherWrap) {
+      const otherSelected = q.type === 'single' ? responses[q.id] === 'Other' :
+        Array.isArray(responses[q.id]) && responses[q.id].includes('Other');
+      otherWrap.style.display = otherSelected ? 'block' : 'none';
+      if (!otherSelected) responses[q.id + '_other'] = '';
+    }
+  }
+
+  updateNextBtn(q);
+}
+
+function updateNextBtn(q) {
+  const btn = document.getElementById('btnNext');
+  let valid = false;
+
+  if (q.type === 'single') valid = !!responses[q.id];
+  else if (q.type === 'multi') valid = Array.isArray(responses[q.id]) && responses[q.id].length > 0;
+  else if (q.type === 'open') valid = true;
+
+  btn.disabled = !valid;
+
+  // Last question label
+  const activeIdx = history[currentQIndex];
+  activeQuestions = getActiveQuestions();
+  btn.innerHTML = activeIdx >= activeQuestions.length - 1
+    ? 'Submit <span class="btn-arrow">→</span>'
+    : 'Continue <span class="btn-arrow">→</span>';
+}
+
+function goNext() {
+  const activeIdx = history[currentQIndex];
+  activeQuestions = getActiveQuestions();
+  if (activeIdx >= activeQuestions.length - 1) {
+    showDone();
+  } else {
+    advanceTo(activeIdx + 1);
+  }
+}
+
+function goBack() {
+  if (currentQIndex <= 0) return;
+  currentQIndex--;
+  const idx = history[currentQIndex];
+  activeQuestions = getActiveQuestions();
+  renderQuestion(activeQuestions[idx]);
+  updateProgress();
+}
+
+function updateProgress() {
+  activeQuestions = getActiveQuestions();
+  const idx = history[currentQIndex] || 0;
+  const pct = ((idx) / activeQuestions.length) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+}
+
+async function showDone() {
+  document.getElementById('progressBar').style.width = '100%';
+
+  try {
+    const success = await submitSurvey();
+    if (success !== false) {
+      showScreen('submitted');
+    }
+  } catch (err) {
+    console.error('Submission failed:', err);
+    alert('Failed to submit survey. Your responses have been saved locally. Please try refreshing the page and submitting again, or contact support if the issue persists.');
+  }
+}
+
+async function submitFollowup() {
+  const name = document.getElementById('inputName').value.trim();
+  const contact = document.getElementById('inputContact').value.trim();
+
+  if (!name || !contact) {
+    alert('Please provide both name and contact information.');
+    return;
+  }
+
+  try {
+    await submitContact(name, contact);
+    showScreen('done');
+  } catch (err) {
+    console.error('Contact submission failed:', err);
+    alert('Failed to save contact information. Please try again or email me directly.');
+  }
+}
+</script>
+</body>
+</html>

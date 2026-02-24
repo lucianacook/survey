@@ -479,7 +479,8 @@
   <!-- SUBMITTED -->
   <div class="screen" id="screen-submitted">
     <div class="thankyou-mark">✓</div>
-    <h2 class="thankyou-title">Your responses have been submitted and are fully anonymous. We genuinely appreciate you taking the time.</h2>
+    <h2 class="thankyou-title">Your responses have been submitted and are fully anonymous.</h2>
+    <p class="thankyou-body">We genuinely appreciate you taking the time.</p>
     <div style="margin-top:40px;">
       <p class="thankyou-body" style="margin-bottom:24px;">One last thing. We are looking for a small group of people to have a brief 20-minute conversation to go a little deeper. If you are open to it, your input could directly shape what we build.</p>
       <div style="display:flex;gap:12px;flex-wrap:wrap;">
@@ -495,11 +496,12 @@
     <div style="margin-top:32px;">
       <p class="contact-label">Your name</p>
       <input class="contact-input" type="text" id="inputName" placeholder="First name is fine">
-      <p class="contact-label" style="margin-top:16px;">Email and/or LinkedIn URL</p>
+      <p class="contact-label" style="margin-top:16px;">Best way to reach you</p>
       <input class="contact-input" type="text" id="inputContact" placeholder="you@email.com or linkedin.com/in/yourname">
     </div>
-    <div style="margin-top:32px;">
+    <div style="margin-top:32px;display:flex;gap:12px;flex-wrap:wrap;">
       <button class="btn btn-primary" onclick="submitFollowup()">Submit <span class="btn-arrow">→</span></button>
+      <button class="btn btn-ghost" onclick="showScreen('done')" style="padding:14px 20px;">Skip</button>
     </div>
   </div>
 

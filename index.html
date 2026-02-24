@@ -778,7 +778,7 @@ const QUESTIONS = [
   {
     id: 'q1', section: 'Section 1: About You', number: 1,
     title: 'How would you describe your current approach to mental wellness and self-care?',
-    type: 'multi',
+    type: 'single',
     options: [
       'I actively prioritize it with regular habits or practices',
       'I think about it but don\'t have a consistent routine',
@@ -884,9 +884,21 @@ const QUESTIONS = [
       'I\'m not sure'
     ]
   },
+  {
+    id: 'q7b', section: 'Section 2: Journaling & Self-Reflection', number: 8,
+    title: 'How often do you currently reflect on your emotions or experiences?',
+    type: 'single',
+    options: [
+      'Daily',
+      'A few times a week',
+      'When something specific happens',
+      'Rarely',
+      'Never really'
+    ]
+  },
   // SECTION 3
   {
-    id: 'q8', section: 'Section 3: Therapy & Professional Support', number: 8,
+    id: 'q8', section: 'Section 3: Therapy & Professional Support', number: 9,
     title: 'Have you ever been to therapy or worked with a mental health professional?',
     type: 'single',
     options: [
@@ -995,9 +1007,23 @@ const QUESTIONS = [
     ],
     hasOther: true
   },
+  {
+    id: 'q14b', section: 'Section 4: AI & Technology', number: 15,
+    title: 'What would make you trust an AI tool with personal emotional data?',
+    type: 'multi',
+    options: [
+      'End-to-end encryption',
+      'Data stays on my device only',
+      'No data shared with third parties',
+      'Ability to delete everything anytime',
+      'Transparent about how it works',
+      'Other'
+    ],
+    hasOther: true
+  },
   // SECTION 5
   {
-    id: 'q15', section: 'Section 5: The Dream', number: 15,
+    id: 'q15', section: 'Section 5: The Dream', number: 16,
     title: 'If a tool existed that genuinely helped you understand your emotional patterns and grow from them, what would it need to do and what would make you trust it?',
     type: 'open',
     placeholder: 'Take your time with this one. There is no right answer...'
@@ -1014,7 +1040,18 @@ const QUESTIONS = [
     ]
   },
   {
-    id: 'q17', section: 'Section 5: The Dream', number: 17,
+    id: 'q16b', section: 'Section 5: The Dream', number: 17,
+    title: 'If you used a tool like this, what platform would you prefer?',
+    type: 'single',
+    options: [
+      'Mobile app',
+      'Web/desktop',
+      'Both mobile and web',
+      'Doesn\'t matter'
+    ]
+  },
+  {
+    id: 'q17', section: 'Section 5: The Dream', number: 18,
     title: 'If something genuinely improved your self-awareness and emotional wellbeing, what would you expect to pay per month?',
     type: 'single',
     options: [

@@ -479,10 +479,9 @@
   <!-- SUBMITTED -->
   <div class="screen" id="screen-submitted">
     <div class="thankyou-mark">✓</div>
-    <h2 class="thankyou-title">Your responses have been submitted.</h2>
-    <p class="thankyou-body">Everything you shared is fully anonymous. Thank you for helping shape something that's still being defined.</p>
+    <h2 class="thankyou-title">Your responses have been submitted and are fully anonymous. We genuinely appreciate you taking the time.</h2>
     <div style="margin-top:40px;">
-      <p class="thankyou-body" style="margin-bottom:24px;">One last thing — would you be open to a 20-minute follow-up conversation? A small group of people who go deeper will directly shape what gets built. Completely optional.</p>
+      <p class="thankyou-body" style="margin-bottom:24px;">One last thing. We are looking for a small group of people to have a brief 20-minute conversation to go a little deeper. If you are open to it, your input could directly shape what we build.</p>
       <div style="display:flex;gap:12px;flex-wrap:wrap;">
         <button class="btn btn-primary" onclick="showScreen('followup')">Yes, I'm open to it <span class="btn-arrow">→</span></button>
         <button class="btn btn-ghost" onclick="showScreen('done')" style="padding:14px 20px;">No thanks</button>
@@ -492,17 +491,15 @@
 
   <!-- FOLLOW UP -->
   <div class="screen" id="screen-followup">
-    <h2 class="thankyou-title">Great — let's stay in touch.</h2>
-    <p class="thankyou-body" style="margin-bottom:32px;">Your contact information is stored completely separately from your survey responses and will only be used to reach out about a follow-up conversation.</p>
-    <div>
+    <h2 class="thankyou-title">Great. How can we reach you?</h2>
+    <div style="margin-top:32px;">
       <p class="contact-label">Your name</p>
       <input class="contact-input" type="text" id="inputName" placeholder="First name is fine">
-      <p class="contact-label" style="margin-top:16px;">Best way to reach you</p>
+      <p class="contact-label" style="margin-top:16px;">Email and/or LinkedIn URL</p>
       <input class="contact-input" type="text" id="inputContact" placeholder="you@email.com or linkedin.com/in/yourname">
     </div>
-    <div style="margin-top:32px;display:flex;gap:12px;flex-wrap:wrap;">
+    <div style="margin-top:32px;">
       <button class="btn btn-primary" onclick="submitFollowup()">Submit <span class="btn-arrow">→</span></button>
-      <button class="btn btn-ghost" onclick="showScreen('done')" style="padding:14px 20px;">Skip</button>
     </div>
   </div>
 

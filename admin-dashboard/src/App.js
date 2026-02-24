@@ -35,7 +35,7 @@ function App() {
 
   useEffect(() => {
     // Check if already authenticated
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabaseAuth.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         setAuthenticated(true);
         loadData();

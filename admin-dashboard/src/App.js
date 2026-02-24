@@ -4,10 +4,22 @@ import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, Legend, Resp
 import { format } from 'date-fns';
 import './App.css';
 
-// TODO: Replace with your actual Supabase credentials
-const supabase = createClient(
+// Admin client with service_role - bypasses RLS
+const supabaseAdmin = createClient(
   'https://nvipwqthamsglqcaqyjs.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52aXB3cXRoYW1zZ2xxY2FxeWpzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MTg3Nzc2MywiZXhwIjoyMDg3NDUzNzYzfQ.HoZo8owLUK1PPQdrAyWolSuNJLUEM_JOt5tqiuSrb5E'
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52aXB3cXRoYW1zZ2xxY2FxeWpzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MTg3Nzc2MywiZXhwIjoyMDg3NDUzNzYzfQ.HoZo8owLUK1PPQdrAyWolSuNJLUEM_JOt5tqiuSrb5E',
+  {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    }
+  }
+);
+
+// Auth client for login only (uses anon key)
+const supabaseAuth = createClient(
+  'https://nvipwqthamsglqcaqyjs.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52aXB3cXRoYW1zZ2xxY2FxeWpzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4Nzc3NjMsImV4cCI6MjA4NzQ1Mzc2M30.Ui-TW8vKfPr0aajXf99n6Y-wv-nY0N5Gfv0x9QKFMQ4'
 );
 
 const COLORS = ['#0A6B6E', '#1A8F8F', '#C8704A', '#6B6B6B', '#0088FE', '#00C49F'];
@@ -35,7 +47,7 @@ function App() {
     e.preventDefault();
     setLoading(true);
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabaseAuth.auth.signInWithPassword({ email, password });
 
     if (error) {
       alert('Login failed: ' + error.message);
@@ -49,8 +61,8 @@ function App() {
   const loadData = async () => {
     setLoading(true);
 
-    // Load survey responses
-    const { data: surveyData, error: surveyError } = await supabase
+    // Load survey responses using admin client
+    const { data: surveyData, error: surveyError } = await supabaseAdmin
       .from('survey_responses')
       .select('*')
       .eq('status', 'completed')
@@ -58,8 +70,8 @@ function App() {
 
     if (!surveyError) setResponses(surveyData || []);
 
-    // Load contacts
-    const { data: contactData, error: contactError } = await supabase
+    // Load contacts using admin client
+    const { data: contactData, error: contactError } = await supabaseAdmin
       .from('follow_up_contacts')
       .select('*')
       .order('submitted_at', { ascending: false });
@@ -114,7 +126,7 @@ function App() {
   };
 
   const updateContactStatus = async (contactId, contacted) => {
-    await supabase
+    await supabaseAdmin
       .from('follow_up_contacts')
       .update({ contacted })
       .eq('id', contactId);
@@ -174,7 +186,7 @@ function App() {
     <div className="dashboard">
       <header>
         <h1>Wellness Survey Dashboard</h1>
-        <button onClick={() => supabase.auth.signOut().then(() => setAuthenticated(false))}>
+        <button onClick={() => supabaseAuth.auth.signOut().then(() => setAuthenticated(false))}>
           Logout
         </button>
       </header>

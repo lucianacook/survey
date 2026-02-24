@@ -19,7 +19,7 @@ const supabaseAdmin = createClient(
 // Auth client for login only (uses anon key)
 const supabaseAuth = createClient(
   'https://nvipwqthamsglqcaqyjs.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52aXB3cXRoYW1zZ2xxY2FxeWpzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4Nzc3NjMsImV4cCI6MjA4NzQ1Mzc2M30.Ui-TW8vKfPr0aajXf99n6Y-wv-nY0N5Gfv0x9QKFMQ4'
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52aXB3cXRoYW1zZ2xxY2FxeWpzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4Nzc3NjMsImV4cCI6MjA4NzQ1Mzc2M30.aql34XsFCX-wthzqIo1vR0jbLmDvR2-VXYiC-X7T1Yg'
 );
 
 const COLORS = ['#0A6B6E', '#1A8F8F', '#C8704A', '#6B6B6B', '#0088FE', '#00C49F'];

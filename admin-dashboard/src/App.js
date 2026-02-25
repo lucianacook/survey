@@ -33,6 +33,15 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
 
+  // Analytics state
+  const [analytics, setAnalytics] = useState({
+    pageViews: 0,
+    started: 0,
+    completed: 0,
+    avgCompletionTime: 0,
+    dropOffByQuestion: []
+  });
+
   useEffect(() => {
     // Check if already authenticated
     supabaseAuth.auth.getSession().then(({ data: { session } }) => {
@@ -77,6 +86,63 @@ function App() {
       .order('submitted_at', { ascending: false });
 
     if (!contactError) setContacts(contactData || []);
+
+    // Load analytics data
+    // 1. Page views
+    const { data: pageViewsData, error: pageViewsError } = await supabaseAdmin
+      .from('page_views')
+      .select('*');
+
+    // 2. Question progress
+    const { data: questionProgressData, error: questionProgressError } = await supabaseAdmin
+      .from('question_progress')
+      .select('*');
+
+    // Calculate analytics
+    if (!pageViewsError && !questionProgressError && !surveyError) {
+      const totalPageViews = pageViewsData?.length || 0;
+      const totalStarted = pageViewsData?.filter(pv => pv.started).length || 0;
+      const totalCompleted = surveyData?.length || 0;
+
+      // Calculate average completion time
+      let avgCompletionTime = 0;
+      if (surveyData && surveyData.length > 0) {
+        const completionTimes = surveyData
+          .filter(r => r.started_at && r.completed_at)
+          .map(r => {
+            const start = new Date(r.started_at);
+            const end = new Date(r.completed_at);
+            return (end - start) / 1000 / 60; // minutes
+          });
+
+        if (completionTimes.length > 0) {
+          avgCompletionTime = completionTimes.reduce((a, b) => a + b, 0) / completionTimes.length;
+        }
+      }
+
+      // Calculate drop-off by question
+      const questionProgress = questionProgressData || [];
+      const questionCounts = {};
+      questionProgress.forEach(qp => {
+        questionCounts[qp.question_id] = (questionCounts[qp.question_id] || 0) + 1;
+      });
+
+      const dropOffByQuestion = Object.entries(questionCounts)
+        .map(([question_id, count]) => ({
+          question: question_id,
+          reached: count,
+          dropOffRate: totalStarted > 0 ? Math.round(((totalStarted - count) / totalStarted) * 100) : 0
+        }))
+        .sort((a, b) => b.dropOffRate - a.dropOffRate);
+
+      setAnalytics({
+        pageViews: totalPageViews,
+        started: totalStarted,
+        completed: totalCompleted,
+        avgCompletionTime: Math.round(avgCompletionTime * 10) / 10, // round to 1 decimal
+        dropOffByQuestion
+      });
+    }
 
     setLoading(false);
   };
@@ -221,24 +287,97 @@ function App() {
       <main>
         {activeTab === 'overview' && (
           <div className="overview">
+            <h2 style={{marginBottom: '24px', color: '#1C1C1C'}}>Survey Funnel</h2>
             <div className="stat-cards">
               <div className="stat-card">
-                <h3>Total Responses</h3>
-                <p className="stat-number">{responses.length}</p>
+                <h3>Page Views</h3>
+                <p className="stat-number">{analytics.pageViews}</p>
+                <p style={{fontSize: '13px', color: '#6B6B6B', marginTop: '8px'}}>
+                  Total visitors to survey
+                </p>
               </div>
               <div className="stat-card">
-                <h3>Follow-up Contacts</h3>
-                <p className="stat-number">{contacts.length}</p>
+                <h3>Started</h3>
+                <p className="stat-number">{analytics.started}</p>
+                <p style={{fontSize: '13px', color: '#6B6B6B', marginTop: '8px'}}>
+                  {analytics.pageViews > 0 ? Math.round((analytics.started / analytics.pageViews) * 100) : 0}% start rate
+                </p>
               </div>
               <div className="stat-card">
-                <h3>Conversion Rate</h3>
-                <p className="stat-number">
-                  {responses.length > 0 ? Math.round((contacts.length / responses.length) * 100) : 0}%
+                <h3>Completed</h3>
+                <p className="stat-number">{analytics.completed}</p>
+                <p style={{fontSize: '13px', color: '#6B6B6B', marginTop: '8px'}}>
+                  {analytics.started > 0 ? Math.round((analytics.completed / analytics.started) * 100) : 0}% completion rate
+                </p>
+              </div>
+              <div className="stat-card">
+                <h3>Avg. Time</h3>
+                <p className="stat-number">{analytics.avgCompletionTime}<span style={{fontSize: '18px'}}>min</span></p>
+                <p style={{fontSize: '13px', color: '#6B6B6B', marginTop: '8px'}}>
+                  Time to complete survey
                 </p>
               </div>
             </div>
 
-            <button onClick={loadData} className="refresh-btn" disabled={loading}>
+            <h2 style={{margin: '40px 0 24px', color: '#1C1C1C'}}>Engagement Metrics</h2>
+            <div className="stat-cards">
+              <div className="stat-card">
+                <h3>Follow-up Contacts</h3>
+                <p className="stat-number">{contacts.length}</p>
+                <p style={{fontSize: '13px', color: '#6B6B6B', marginTop: '8px'}}>
+                  {analytics.completed > 0 ? Math.round((contacts.length / analytics.completed) * 100) : 0}% of completions
+                </p>
+              </div>
+              <div className="stat-card">
+                <h3>Overall Conversion</h3>
+                <p className="stat-number">
+                  {analytics.pageViews > 0 ? Math.round((analytics.completed / analytics.pageViews) * 100) : 0}%
+                </p>
+                <p style={{fontSize: '13px', color: '#6B6B6B', marginTop: '8px'}}>
+                  Visitors → completions
+                </p>
+              </div>
+            </div>
+
+            {/* Drop-off analysis */}
+            {analytics.dropOffByQuestion.length > 0 && (
+              <>
+                <h2 style={{margin: '40px 0 24px', color: '#1C1C1C'}}>Drop-off Analysis</h2>
+                <div className="chart-section">
+                  <h3>Questions with Highest Drop-off</h3>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={analytics.dropOffByQuestion.slice(0, 10)}>
+                      <XAxis dataKey="question" angle={-45} textAnchor="end" height={80} />
+                      <YAxis label={{ value: 'Drop-off Rate (%)', angle: -90, position: 'insideLeft' }} />
+                      <Tooltip />
+                      <Bar dataKey="dropOffRate" fill="#C8704A" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                  <table style={{width: '100%', marginTop: '20px', fontSize: '14px'}}>
+                    <thead>
+                      <tr style={{borderBottom: '1px solid #E8E4DD'}}>
+                        <th style={{textAlign: 'left', padding: '8px', color: '#6B6B6B'}}>Question</th>
+                        <th style={{textAlign: 'right', padding: '8px', color: '#6B6B6B'}}>Reached</th>
+                        <th style={{textAlign: 'right', padding: '8px', color: '#6B6B6B'}}>Drop-off Rate</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {analytics.dropOffByQuestion.slice(0, 10).map((q, idx) => (
+                        <tr key={idx} style={{borderBottom: '1px solid #E8E4DD'}}>
+                          <td style={{padding: '8px'}}>{q.question}</td>
+                          <td style={{padding: '8px', textAlign: 'right'}}>{q.reached}</td>
+                          <td style={{padding: '8px', textAlign: 'right', color: q.dropOffRate > 50 ? '#C8704A' : '#1C1C1C'}}>
+                            {q.dropOffRate}%
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
+
+            <button onClick={loadData} className="refresh-btn" disabled={loading} style={{marginTop: '32px'}}>
               {loading ? '⏳ Loading...' : '🔄 Refresh Data'}
             </button>
           </div>

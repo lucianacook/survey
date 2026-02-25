@@ -851,7 +851,27 @@ const QUESTIONS = [
     ]
   },
   {
-    id: 'q2', section: 'Section 1: About You', number: 2,
+    id: 'q1b', section: 'Section 1: About You', number: 2,
+    title: 'What do you currently do to support your mental or emotional wellbeing? (Select all that apply)',
+    type: 'multi',
+    options: [
+      'Exercise or physical activity',
+      'Meditation or mindfulness',
+      'Journaling or writing',
+      'Talk to friends or family',
+      'Therapy or counseling',
+      'Mental wellness apps (Headspace, Calm, etc.)',
+      'Creative outlets (art, music, etc.)',
+      'Spend time in nature',
+      'Reading or podcasts on personal growth',
+      'Prayer or spiritual practice',
+      'Nothing specific',
+      'Other'
+    ],
+    hasOther: true
+  },
+  {
+    id: 'q2', section: 'Section 1: About You', number: 3,
     title: 'Which best describes where you\'re at in life right now?',
     type: 'single',
     options: [
@@ -909,8 +929,8 @@ const QUESTIONS = [
   },
   {
     id: 'q5', section: 'Section 2: Journaling & Self-Reflection', number: 5,
-    title: 'What was the main reason you stopped journaling?',
-    type: 'single',
+    title: 'What were the reasons you stopped journaling? (Select all that apply)',
+    type: 'multi',
     showIf: (r) => ['Yes, but I stopped','I\'ve tried a few times but it never stuck'].includes(r.q3),
     options: [
       'It felt like a chore, hard to stay consistent',
@@ -1123,8 +1143,10 @@ const QUESTIONS = [
       '$5 to $10 per month',
       '$11 to $20 per month',
       '$21 to $30 per month',
-      'More than $30 per month, if it actually worked'
-    ]
+      'More than $30 per month, if it actually worked',
+      'Other'
+    ],
+    hasOther: true
   },
   // OPT IN handled as separate screen after submission
 ];

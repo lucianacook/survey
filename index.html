@@ -282,9 +282,14 @@
   .btn-ghost {
     background: transparent;
     color: var(--gray);
-    padding: 14px 0;
+    padding: 14px 20px;
+    border: 1.5px solid var(--beige);
+    border-radius: 8px;
   }
-  .btn-ghost:hover { color: var(--dark); }
+  .btn-ghost:hover {
+    color: var(--dark);
+    border-color: var(--gray);
+  }
 
   .btn-arrow { font-size: 18px; transition: transform 0.2s; }
   .btn-primary:not(:disabled):hover .btn-arrow { transform: translateX(4px); }
@@ -311,8 +316,8 @@
   }
   .thankyou-title {
     font-family: var(--serif);
-    font-size: clamp(28px, 5vw, 42px);
-    line-height: 1.15;
+    font-size: clamp(24px, 4.5vw, 34px);
+    line-height: 1.2;
     margin-bottom: 20px;
   }
   .thankyou-body {
@@ -505,8 +510,11 @@
       <p class="thankyou-body" style="margin-bottom:24px;">One last thing. We are looking for a small group of people to have a brief 20-minute conversation to go a little deeper. If you are open to it, your input could directly shape what we build.</p>
       <div style="display:flex;gap:12px;flex-wrap:wrap;">
         <button class="btn btn-primary" onclick="showScreen('followup')">Yes, I'm open to it <span class="btn-arrow">→</span></button>
-        <button class="btn btn-ghost" onclick="showScreen('done')" style="padding:14px 20px;">No thanks</button>
+        <button class="btn btn-ghost" onclick="showScreen('done')">No thanks</button>
       </div>
+    </div>
+    <div style="margin-top:48px;padding-top:24px;border-top:1px solid var(--beige);text-align:center;">
+      <p style="font-size:13px;color:var(--gray);font-style:italic;">This research is being conducted to better understand mental wellness practices and inform product development.</p>
     </div>
   </div>
 
@@ -521,7 +529,7 @@
     </div>
     <div style="margin-top:32px;display:flex;gap:12px;flex-wrap:wrap;">
       <button class="btn btn-primary" onclick="submitFollowup()">Submit <span class="btn-arrow">→</span></button>
-      <button class="btn btn-ghost" onclick="showScreen('done')" style="padding:14px 20px;">Skip</button>
+      <button class="btn btn-ghost" onclick="showScreen('done')">Skip</button>
     </div>
   </div>
 

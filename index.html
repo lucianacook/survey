@@ -852,7 +852,7 @@ const QUESTIONS = [
   },
   {
     id: 'q1b', section: 'Section 1: About You', number: 2,
-    title: 'What do you currently do to support your mental or emotional wellbeing? (Select all that apply)',
+    title: 'What do you currently do to support your mental or emotional wellbeing?',
     type: 'multi',
     options: [
       'Exercise or physical activity',
@@ -929,7 +929,7 @@ const QUESTIONS = [
   },
   {
     id: 'q5', section: 'Section 2: Journaling & Self-Reflection', number: 5,
-    title: 'What were the reasons you stopped journaling? (Select all that apply)',
+    title: 'What were the reasons you stopped journaling?',
     type: 'multi',
     showIf: (r) => ['Yes, but I stopped','I\'ve tried a few times but it never stuck'].includes(r.q3),
     options: [
@@ -1227,7 +1227,7 @@ function renderQuestion(q) {
   if (!hint) {
     hint = document.createElement('div');
     hint.id = 'qHint';
-    hint.style.cssText = 'font-size:13px;color:#6B6B6B;margin-bottom:20px;margin-top:-8px;';
+    hint.style.cssText = 'font-size:15px;color:#1C1C1C;margin-bottom:20px;margin-top:-8px;font-weight:500;';
     document.getElementById('qTitle').after(hint);
   }
   hint.textContent = q.type === 'multi' ? 'Select all that apply.' : '';
